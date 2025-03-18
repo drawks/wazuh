@@ -198,8 +198,6 @@ chown -R %{_wazuh_user}:%{_wazuh_group} %{_localstatedir}var/lib/wazuh-server
 find %{_localstatedir}var/lib/wazuh-server -type d -exec chmod 750 {} \; -o -type f -exec chmod 640 {} \;
 chown -R %{_wazuh_user}:%{_wazuh_group} %{_localstatedir}usr/share/wazuh-server
 find %{_localstatedir}usr/share/wazuh-server -type d -exec chmod 755 {} \; -o -type f -exec chmod 644 {} \;
-chown -R %{_wazuh_user}:%{_wazuh_group} %{_localstatedir}etc/wazuh-server
-find %{_localstatedir}etc/wazuh-server -type d -exec chmod 755 {} \; -o -type f -exec chmod 644 {} \;
 
 # Binaries
 chmod 750 %{_localstatedir}usr/share/wazuh-server/bin/wazuh-engine
