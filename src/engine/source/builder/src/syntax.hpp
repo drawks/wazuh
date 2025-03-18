@@ -22,6 +22,7 @@ constexpr auto PARENTS_KEY = "parents";              ///< Key for the parents fi
 constexpr auto CHECK_KEY = "check";                  ///< Key for the check stage in an asset.
 constexpr auto PARSE_KEY = "parse";                  ///< Key for the parse stage in an asset.
 constexpr auto NORMALIZE_KEY = "normalize";          ///< Key for the normalize stage in an asset.
+constexpr auto RULE_NORMALIZE_KEY = "rule_normalize";///< Key for the normalize stage in an asset.
 constexpr auto MAP_KEY = "map";                      ///< Key for the map stage in an asset.
 constexpr auto DEFINITIONS_KEY = "definitions";      ///< Key for the definitions stage in an asset.
 constexpr auto OUTPUTS_KEY = "outputs";              ///< Key for the outputs stage in an asset.
