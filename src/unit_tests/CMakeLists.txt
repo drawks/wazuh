@@ -176,6 +176,10 @@ if(${TARGET} STREQUAL "winagent")
                  "syscheckd/test_syscheck_top_level.conf" NEWLINE_STYLE WIN32)
   configure_file("config_files/test_syscheck_config_win.conf"
                  "syscheckd/test_syscheck_config.conf" NEWLINE_STYLE WIN32)
+  configure_file("config_files/test_syscheck_ignore_invalid_type.conf"
+                 "syscheckd/test_syscheck_ignore_invalid_type.conf" NEWLINE_STYLE WIN32)
+  configure_file("config_files/test_syscheck_ignore_invalid_attr.conf"
+                 "syscheckd/test_syscheck_ignore_invalid_attr.conf" NEWLINE_STYLE WIN32)
 else()
   configure_file("config_files/test_syscheck.conf"
                  "syscheckd/test_syscheck.conf" COPYONLY)
@@ -197,6 +201,10 @@ else()
                  "syscheckd/test_syscheck_top_level.conf" COPYONLY)
   configure_file("config_files/test_syscheck.conf"
                  "syscheckd/test_syscheck_config.conf" COPYONLY)
+  configure_file("config_files/test_syscheck_ignore_invalid_type.conf"
+                 "syscheckd/test_syscheck_ignore_invalid_type.conf" COPYONLY)
+  configure_file("config_files/test_syscheck_ignore_invalid_attr.conf"
+                 "syscheckd/test_syscheck_ignore_invalid_attr.conf" COPYONLY)
 endif()
 
 # Coverage

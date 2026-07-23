@@ -361,9 +361,15 @@ void test_Start_win32_Syscheck_dirs_and_registry(void **state) {
     syscheck.ignore = syscheck_ignore;
     syscheck.file_size_enabled = 0;
     syscheck.disk_quota_enabled = 0;
-    OSMatch regex;
+    OSMatch regex = { 0 };
     regex.raw = "^regex$";
-    OSMatch *syscheck_ignore_regex[] = {&regex, NULL};
+    w_expression_t expression = { 0 };
+    expression.exp_type = EXP_TYPE_OSMATCH;
+    expression.match = &regex;
+    fim_ignore_regex syscheck_ignore_regex[] = {
+        { .regex = &expression, .type = FIM_IGNORE_REGEX_SREGEX },
+        { .regex = NULL, .type = FIM_IGNORE_REGEX_SREGEX }
+    };
     syscheck.ignore_regex = syscheck_ignore_regex;
 
     registry_ignore syscheck_registry_ignore[] = { { "Entry1", 1 }, { NULL, 0 } };

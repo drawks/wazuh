@@ -16,6 +16,8 @@
 static char **get_paths_from_env_variable (char *environment_variable);
 /* Used for options nodiff_regex and ignore_regex */
 static int process_option_regex(char *option, OSMatch ***syscheck_option, xml_node *node);
+/* Used for ignore option typed regex */
+static int process_ignore_option_regex(fim_ignore_regex **syscheck_option, xml_node *node);
 /* Used for options ignore and nodiff */
 static void process_option(char ***syscheck_option, xml_node *node);
 /* Set check_all options in a directory/file */
@@ -1937,14 +1939,9 @@ int Read_Syscheck(const OS_XML *xml, XML_NODE node, void *configp, __attribute__
         else if (strcmp(node[i]->element,xml_ignore) == 0) {
             /* If it is a regex, add it */
             if (node[i]->attributes && node[i]->values && node[i]->attributes[0] && node[i]->values[0]) {
-                if (!strcmp(node[i]->attributes[0], "type") && !strcmp(node[i]->values[0], "sregex")) {
-                    int result = process_option_regex("ignore", &syscheck->ignore_regex, node[i]);
-                    if (result < 1) {
-                        return result;
-                    }
-                } else {
-                    mwarn(FIM_INVALID_ATTRIBUTE, node[i]->attributes[0], node[i]->element);
-                    return (OS_INVALID);
+                int result = process_ignore_option_regex(&syscheck->ignore_regex, node[i]);
+                if (result < 1) {
+                    return result;
                 }
             } else {
                 process_option(&syscheck->ignore, node[i]);
@@ -2295,9 +2292,8 @@ void Free_Syscheck(syscheck_config * config) {
             free(config->ignore);
         }
         if (config->ignore_regex) {
-            for (i=0; config->ignore_regex[i] != NULL; i++) {
-                OSMatch_FreePattern(config->ignore_regex[i]);
-                free(config->ignore_regex[i]);
+            for (i=0; config->ignore_regex[i].regex != NULL; i++) {
+                w_free_expression_t(&config->ignore_regex[i].regex);
             }
             free(config->ignore_regex);
         }
@@ -2487,6 +2483,65 @@ static int process_option_regex(char *option, OSMatch ***syscheck_option, xml_no
     }
     mdebug1("Found %s regex node %s OK?", option, node->content);
     mdebug1("Found %s regex size %d", option, counter_opt);
+
+    return 1;
+}
+
+static int process_ignore_option_regex(fim_ignore_regex **syscheck_option, xml_node *node) {
+
+    unsigned int counter_opt = 0;
+    w_exp_type_t regex_type = EXP_TYPE_INVALID;
+    fim_ignore_regex_type configured_type = FIM_IGNORE_REGEX_SREGEX;
+
+    for (int j = 0; node->attributes && node->values && node->attributes[j] && node->values[j]; j++) {
+        if (strcmp(node->attributes[j], "type") != 0) {
+            mwarn(FIM_INVALID_ATTRIBUTE, node->attributes[j], node->element);
+            return OS_INVALID;
+        }
+
+        if (!strcmp(node->values[j], "sregex")) {
+            regex_type = EXP_TYPE_OSMATCH;
+            configured_type = FIM_IGNORE_REGEX_SREGEX;
+        } else if (!strcmp(node->values[j], "osregex")) {
+            regex_type = EXP_TYPE_OSREGEX;
+            configured_type = FIM_IGNORE_REGEX_OSREGEX;
+        } else if (!strcmp(node->values[j], "pcre2")) {
+            regex_type = EXP_TYPE_PCRE2;
+            configured_type = FIM_IGNORE_REGEX_PCRE2;
+        } else {
+            mwarn(FIM_INVALID_ATTRIBUTE, node->attributes[j], node->element);
+            return OS_INVALID;
+        }
+    }
+
+    if (regex_type == EXP_TYPE_INVALID) {
+        mwarn(FIM_INVALID_ATTRIBUTE, "type", node->element);
+        return OS_INVALID;
+    }
+
+    if (!syscheck_option[0]) {
+        os_calloc(2, sizeof(fim_ignore_regex), syscheck_option[0]);
+        syscheck_option[0][0].regex = NULL;
+        syscheck_option[0][1].regex = NULL;
+    } else {
+        while (syscheck_option[0][counter_opt].regex != NULL) {
+            counter_opt++;
+        }
+        os_realloc(syscheck_option[0], sizeof(fim_ignore_regex) * (counter_opt + 2),
+                   syscheck_option[0]);
+        syscheck_option[0][counter_opt + 1].regex = NULL;
+    }
+
+    w_calloc_expression_t(&syscheck_option[0][counter_opt].regex, regex_type);
+    syscheck_option[0][counter_opt].type = configured_type;
+
+    mdebug1("Found ignore regex node %s", node->content);
+
+    if (!w_expression_compile(syscheck_option[0][counter_opt].regex, node->content, 0)) {
+        merror(REGEX_COMPILE_2, node->content);
+        w_free_expression_t(&syscheck_option[0][counter_opt].regex);
+        return 0;
+    }
 
     return 1;
 }

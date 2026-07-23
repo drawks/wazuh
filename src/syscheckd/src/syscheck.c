@@ -738,8 +738,20 @@ int Start_win32_Syscheck() {
 
         /* Print sregex ignores. */
         if(syscheck.ignore_regex)
-            for (r = 0; syscheck.ignore_regex[r] != NULL; r++)
-                mdebug1(FIM_PRINT_IGNORE_SREGEX, "file", syscheck.ignore_regex[r]->raw);
+            for (r = 0; syscheck.ignore_regex[r].regex != NULL; r++) {
+                const char *regex_pattern = w_expression_get_regex_pattern(syscheck.ignore_regex[r].regex);
+                switch (syscheck.ignore_regex[r].type) {
+                    case FIM_IGNORE_REGEX_OSREGEX:
+                        mdebug1("Ignore '%s' osregex '%s'", "file", regex_pattern);
+                        break;
+                    case FIM_IGNORE_REGEX_PCRE2:
+                        mdebug1("Ignore '%s' pcre2 '%s'", "file", regex_pattern);
+                        break;
+                    default:
+                        mdebug1(FIM_PRINT_IGNORE_SREGEX, "file", regex_pattern);
+                        break;
+                }
+            }
 
         /* Print registry ignores. */
         if(syscheck.key_ignore)
