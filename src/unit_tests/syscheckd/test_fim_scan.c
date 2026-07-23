@@ -852,6 +852,53 @@ static void test_fim_check_ignore_regex_directory(void **state) {
     assert_int_equal(ret, 1);
 }
 
+static void test_fim_check_ignore_regex_osregex_file(void **state) {
+    (void) state;
+    int ret;
+
+    expect_string(__wrap__mdebug2, formatted_msg,
+                  "Ignoring path '/test/files/osregex.tmp' due to osregex '^/test/files/osregex\\.(tmp|log)$'");
+
+    ret = fim_check_ignore("/test/files/osregex.tmp", FIM_REGULAR);
+
+    assert_int_equal(ret, 1);
+}
+
+static void test_fim_check_ignore_regex_pcre2_file(void **state) {
+    (void) state;
+    int ret;
+
+    expect_string(__wrap__mdebug2, formatted_msg,
+                  "Ignoring path '/test/files/pcre2.tmp' due to pcre2 '^/test/files/pcre2\\.(tmp|log)$'");
+
+    ret = fim_check_ignore("/test/files/pcre2.tmp", FIM_REGULAR);
+
+    assert_int_equal(ret, 1);
+}
+
+static void test_fim_check_ignore_regex_sregex_negation_directory(void **state) {
+    (void) state;
+    int ret;
+    w_expression_t *negated_expression = NULL;
+    fim_ignore_regex negated_ignore_regex[] = {
+        { .regex = NULL, .type = FIM_IGNORE_REGEX_SREGEX },
+        { .regex = NULL, .type = FIM_IGNORE_REGEX_SREGEX }
+    };
+    fim_ignore_regex *original_ignore_regex = syscheck.ignore_regex;
+
+    w_calloc_expression_t(&negated_expression, EXP_TYPE_OSMATCH);
+    assert_true(w_expression_compile(negated_expression, "!test_dir", 0));
+
+    negated_ignore_regex[0].regex = negated_expression;
+    syscheck.ignore_regex = negated_ignore_regex;
+
+    ret = fim_check_ignore("/test/no_match_directory", FIM_DIRECTORY);
+    assert_int_equal(ret, 0);
+
+    syscheck.ignore_regex = original_ignore_regex;
+    w_free_expression_t(&negated_expression);
+}
+
 
 static void test_fim_check_ignore_failure(void **state) {
    int ret;
@@ -4323,6 +4370,9 @@ int main(void) {
         cmocka_unit_test(test_fim_check_ignore_strncasecmp),
         cmocka_unit_test(test_fim_check_ignore_regex_file),
         cmocka_unit_test(test_fim_check_ignore_regex_directory),
+        cmocka_unit_test(test_fim_check_ignore_regex_osregex_file),
+        cmocka_unit_test(test_fim_check_ignore_regex_pcre2_file),
+        cmocka_unit_test(test_fim_check_ignore_regex_sregex_negation_directory),
         cmocka_unit_test(test_fim_check_ignore_failure),
     };
     const struct CMUnitTest root_monitor_tests[] = {

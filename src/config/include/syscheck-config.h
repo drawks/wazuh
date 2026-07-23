@@ -11,6 +11,8 @@
 #ifndef SYSCHECKC_H
 #define SYSCHECKC_H
 
+#include "expression.h"
+
 typedef enum fim_event_mode {
     FIM_SCHEDULED,
     FIM_REALTIME,
@@ -274,6 +276,17 @@ typedef struct registry_ignore_regex {
     int arch;
 } registry_ignore_regex;
 
+typedef enum fim_ignore_regex_type {
+    FIM_IGNORE_REGEX_SREGEX = 0,
+    FIM_IGNORE_REGEX_OSREGEX,
+    FIM_IGNORE_REGEX_PCRE2
+} fim_ignore_regex_type;
+
+typedef struct fim_ignore_regex {
+    w_expression_t *regex;
+    fim_ignore_regex_type type;
+} fim_ignore_regex;
+
 #endif
 
 typedef struct fim_file_data {
@@ -402,7 +415,7 @@ typedef struct _config {
     int file_entry_limit;                              /* maximum number of files to monitor */
 
     char **ignore;                                     /* list of files/dirs to ignore */
-    OSMatch **ignore_regex;                            /* regex of files/dirs to ignore */
+    fim_ignore_regex *ignore_regex;                   /* typed regex of files/dirs to ignore */
 
     int disk_quota_enabled;                            /* Enable diff disk quota limit */
     int disk_quota_limit;                              /* Controls the increase of the size of the queue/diff/local folder (in KB) */

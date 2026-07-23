@@ -264,10 +264,30 @@ cJSON *getSyscheckConfig(void) {
     }
     if (syscheck.ignore_regex) {
         cJSON *igns = cJSON_CreateArray();
-        for (i=0;syscheck.ignore_regex[i];i++) {
-            cJSON_AddItemToArray(igns, cJSON_CreateString(syscheck.ignore_regex[i]->raw));
+        cJSON *typed_igns = cJSON_CreateArray();
+
+        for (i=0;syscheck.ignore_regex[i].regex;i++) {
+            cJSON_AddItemToArray(igns, cJSON_CreateString(w_expression_get_regex_pattern(syscheck.ignore_regex[i].regex)));
+
+            cJSON *typed_ign = cJSON_CreateObject();
+            cJSON_AddStringToObject(typed_ign, "entry", w_expression_get_regex_pattern(syscheck.ignore_regex[i].regex));
+
+            switch (syscheck.ignore_regex[i].type) {
+                case FIM_IGNORE_REGEX_OSREGEX:
+                    cJSON_AddStringToObject(typed_ign, "type", "osregex");
+                    break;
+                case FIM_IGNORE_REGEX_PCRE2:
+                    cJSON_AddStringToObject(typed_ign, "type", "pcre2");
+                    break;
+                default:
+                    cJSON_AddStringToObject(typed_ign, "type", "sregex");
+                    break;
+            }
+
+            cJSON_AddItemToArray(typed_igns, typed_ign);
         }
         cJSON_AddItemToObject(syscfg,"ignore_sregex",igns);
+        cJSON_AddItemToObject(syscfg,"ignore_regex",typed_igns);
     }
 #ifndef WIN32
     cJSON *whodata = cJSON_CreateObject();

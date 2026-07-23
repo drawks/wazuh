@@ -651,12 +651,24 @@ int fim_check_ignore (const char *file_name, mode_t path_type) {
     // Check in the regex entry
     if (syscheck.ignore_regex) {
         int i = 0;
-        while (syscheck.ignore_regex[i] != NULL) {
-            if (OSMatch_Execute(file_name, strlen(file_name), syscheck.ignore_regex[i])) {
-                if (path_type == FIM_DIRECTORY && syscheck.ignore_regex[i]->raw[0] == '!') {
+        while (syscheck.ignore_regex[i].regex != NULL) {
+            const char *regex_pattern = w_expression_get_regex_pattern(syscheck.ignore_regex[i].regex);
+
+            if (w_expression_match(syscheck.ignore_regex[i].regex, file_name, NULL, NULL)) {
+                if (path_type == FIM_DIRECTORY &&
+                    syscheck.ignore_regex[i].type == FIM_IGNORE_REGEX_SREGEX &&
+                    regex_pattern &&
+                    regex_pattern[0] == '!') {
                     return 0;
                 } else {
-                    mdebug2(FIM_IGNORE_SREGEX, file_name, syscheck.ignore_regex[i]->raw);
+                    if (syscheck.ignore_regex[i].type == FIM_IGNORE_REGEX_SREGEX) {
+                        mdebug2(FIM_IGNORE_SREGEX, file_name, regex_pattern);
+                    } else {
+                        mdebug2("Ignoring path '%s' due to %s '%s'",
+                                file_name,
+                                syscheck.ignore_regex[i].type == FIM_IGNORE_REGEX_OSREGEX ? "osregex" : "pcre2",
+                                regex_pattern);
+                    }
                     return 1;
                 }
             }

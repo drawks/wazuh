@@ -172,6 +172,30 @@ void test_Read_Syscheck_Config_invalid(void **state)
     assert_int_equal(ret, OS_INVALID);
 }
 
+void test_Read_Syscheck_Config_invalid_ignore_type(void **state)
+{
+    (void) state;
+    int ret;
+
+    expect_any_always(__wrap__mdebug1, formatted_msg);
+
+    ret = Read_Syscheck_Config("test_syscheck_ignore_invalid_type.conf");
+
+    assert_int_equal(ret, OS_INVALID);
+}
+
+void test_Read_Syscheck_Config_invalid_ignore_attr(void **state)
+{
+    (void) state;
+    int ret;
+
+    expect_any_always(__wrap__mdebug1, formatted_msg);
+
+    ret = Read_Syscheck_Config("test_syscheck_ignore_invalid_attr.conf");
+
+    assert_int_equal(ret, OS_INVALID);
+}
+
 void test_Read_Syscheck_Config_undefined(void **state)
 {
     (void) state;
@@ -293,9 +317,9 @@ void test_getSyscheckConfig(void **state)
 
     cJSON *sys_items = cJSON_GetObjectItem(ret, "syscheck");
 #if defined(TEST_AGENT)
-    assert_int_equal(cJSON_GetArraySize(sys_items), 18);
+    assert_int_equal(cJSON_GetArraySize(sys_items), 19);
 #elif defined(TEST_WINAGENT)
-    assert_int_equal(cJSON_GetArraySize(sys_items), 26);
+    assert_int_equal(cJSON_GetArraySize(sys_items), 27);
 #endif
 
     cJSON *disabled = cJSON_GetObjectItem(sys_items, "disabled");
@@ -354,7 +378,30 @@ void test_getSyscheckConfig(void **state)
 #ifdef TEST_WINAGENT
     cJSON *sys_ignore_regex = cJSON_GetObjectItem(sys_items, "ignore_sregex");
     assert_int_equal(cJSON_GetArraySize(sys_ignore_regex), 1);
+#else
+    cJSON *sys_ignore_regex = cJSON_GetObjectItem(sys_items, "ignore_sregex");
+    assert_int_equal(cJSON_GetArraySize(sys_ignore_regex), 3);
+#endif
 
+    cJSON *sys_typed_ignore_regex = cJSON_GetObjectItem(sys_items, "ignore_regex");
+#ifdef TEST_WINAGENT
+    assert_int_equal(cJSON_GetArraySize(sys_typed_ignore_regex), 1);
+#else
+    assert_int_equal(cJSON_GetArraySize(sys_typed_ignore_regex), 3);
+#endif
+
+#ifndef TEST_WINAGENT
+    cJSON *typed_ignore_sregex = cJSON_GetArrayItem(sys_typed_ignore_regex, 0);
+    assert_string_equal(cJSON_GetStringValue(cJSON_GetObjectItem(typed_ignore_sregex, "type")), "sregex");
+
+    cJSON *typed_ignore_osregex = cJSON_GetArrayItem(sys_typed_ignore_regex, 1);
+    assert_string_equal(cJSON_GetStringValue(cJSON_GetObjectItem(typed_ignore_osregex, "type")), "osregex");
+
+    cJSON *typed_ignore_pcre2 = cJSON_GetArrayItem(sys_typed_ignore_regex, 2);
+    assert_string_equal(cJSON_GetStringValue(cJSON_GetObjectItem(typed_ignore_pcre2, "type")), "pcre2");
+#endif
+
+#ifdef TEST_WINAGENT
     cJSON *sys_windows_audit_interval = cJSON_GetObjectItem(sys_items, "windows_audit_interval");
     assert_int_equal(sys_windows_audit_interval->valueint, 0);
 
@@ -867,6 +914,8 @@ int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_success, setup_read_config, restart_syscheck),
         cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_invalid, setup_read_config, restart_syscheck),
+        cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_invalid_ignore_type, setup_read_config, restart_syscheck),
+        cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_invalid_ignore_attr, setup_read_config, restart_syscheck),
         cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_undefined, setup_read_config, restart_syscheck),
         cmocka_unit_test_setup_teardown(test_Read_Syscheck_Config_unparsed, setup_read_config, restart_syscheck),
         cmocka_unit_test_setup_teardown(test_getSyscheckConfig, setup_read_config, restart_syscheck),

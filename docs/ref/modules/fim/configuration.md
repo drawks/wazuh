@@ -226,13 +226,17 @@ Files or directories to exclude from monitoring and scanning. Paths that match i
 |---|---|
 | **Default** | Varies by OS |
 | **Allowed values** | Any file or directory path |
-| **Attribute: `type`** | `sregex` — use a regex pattern |
+| **Attribute: `type`** | `sregex`, `osregex`, `pcre2` — use a regex pattern |
 
 ```xml
 <ignore>/etc/mtab</ignore>
 <ignore>/etc/hosts.deny</ignore>
 <ignore type="sregex">.log$|.swp$</ignore>
+<ignore type="osregex">^/var/log/.*\.old$</ignore>
+<ignore type="pcre2">^/tmp/fim-(cache|staging)/</ignore>
 ```
+
+> **Note:** Prefix negation (`!pattern`) keeps the legacy `sregex` behavior and is not supported for `osregex` or `pcre2`.
 
 ---
 
